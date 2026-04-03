@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { supabase } from "./config/supabaseClient";
+
 import ReaderView from "./components/ReaderView";
 import UploadButton from "./components/UploadButton";
 import Library from "./components/Library";
-import { supabase } from "./config/supabaseClient";
+import Dashboard from "./components/Dashboard";
 
 function App() {
   const [currentBook, setCurrentBook] = useState(null);
@@ -32,59 +34,55 @@ function App() {
     refreshLibrary();
   }, []);
 
+  // If a book is selected, show the ReaderView
+  if (currentBook) {
+    return (
+      <div
+        style={{ height: "100vh", display: "flex", flexDirection: "column" }}
+      >
+        <div
+          style={{
+            padding: "10px",
+            backgroundColor: "#1a1a1a",
+            borderBottom: "1px solid #333",
+          }}
+        >
+          <button
+            onClick={() => setCurrentBook(null)}
+            style={{ padding: "8px 16px", cursor: "pointer" }}
+          >
+            ← Back to Library
+          </button>
+        </div>
+        <ReaderView book={currentBook} />
+      </div>
+    );
+  }
+
+  // Otherwise, show main Library screen
   return (
     <div
-      style={{
-        width: "100%",
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-      }}
+      style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
     >
-      <div
-        style={{
-          padding: "10px 20px",
-          backgroundColor: "#eee",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h1 style={{ margin: 0, fontSize: "1.5rem" }}>E-Reader</h1>
-        {currentBook && (
-          <button
-            onClick={() => {
-              setCurrentBook(null); // Close the reader view
-              refreshLibrary();
-            }}
-            style={{ padding: "5px 10px" }}
-          >
-            Back to Library
-          </button>
-        )}
-      </div>
+      <Dashboard />
 
       <div
         style={{
-          position: "relative",
-          flexGrow: 1,
+          maxWidth: "1200px",
+          margin: "0 auto",
+          padding: "20px",
           width: "100%",
-          overflowY: "auto",
+          boxSizing: "border-box",
         }}
       >
-        {currentBook ? (
-          <ReaderView book={currentBook} />
-        ) : (
-          <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-            <UploadButton onRefresh={refreshLibrary} />
-            <Library
-              books={books}
-              loading={loading}
-              onSelectBook={setCurrentBook}
-              onRefresh={refreshLibrary}
-            />
-          </div>
-        )}
+        <UploadButton onRefresh={() => fetchBooks()} />
+
+        <Library
+          books={books}
+          loading={loading}
+          onSelectBook={setCurrentBook}
+          onRefresh={() => fetchBooks()}
+        />
       </div>
     </div>
   );
