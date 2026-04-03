@@ -168,9 +168,10 @@ const UploadButton = ({ onRefresh }) => {
     <div
       style={{
         padding: "20px",
-        backgroundColor: "#fff",
+        backgroundColor: "#1e1e1e",
+        color: "#e0e0e0",
         borderRadius: "8px",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        border: "1px solid #333",
         marginBottom: "20px",
       }}
     >

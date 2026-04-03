@@ -68,7 +68,7 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
 
   return (
     <div style={{ padding: "20px 0", position: "relative" }}>
-      <h2>My Bookshelf</h2>
+      <h2 style={{ color: "#ffffff" }}>My Bookshelf</h2>
 
       {/* Invisible overlay that closes the menu if you click anywhere else on the screen */}
       {openMenuId && (
@@ -117,10 +117,10 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
               style={{
                 width: "100%",
                 aspectRatio: "2/3",
-                backgroundColor: "#eee",
+                backgroundColor: "#2a2a2a",
                 borderRadius: "8px",
                 overflow: "hidden",
-                boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                boxShadow: "0 4px 8px rgba(0,0,0,0.4)",
               }}
             >
               <img
@@ -147,6 +147,7 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                   style={{
                     margin: "0 0 4px 0",
                     fontSize: "1rem",
+                    color: "#ffffff",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -158,7 +159,7 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                   style={{
                     margin: "0 0 8px 0",
                     fontSize: "0.8rem",
-                    color: "#666",
+                    color: "#a0a0a0",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -174,7 +175,7 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                       display: "flex",
                       justifyContent: "space-between",
                       fontSize: "0.75rem",
-                      color: "#666",
+                      color: "#888888",
                       marginBottom: "4px",
                     }}
                   >
@@ -188,7 +189,7 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                     style={{
                       width: "100%",
                       height: "6px",
-                      backgroundColor: "#e0e0e0",
+                      backgroundColor: "#333333",
                       borderRadius: "3px",
                       overflow: "hidden",
                     }}
@@ -197,7 +198,7 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                       style={{
                         width: `${book.percentage || 0}%`,
                         height: "100%",
-                        backgroundColor: "#0066cc",
+                        backgroundColor: "#3b82f6",
                         transition: "width 0.3s ease",
                       }}
                     ></div>
@@ -214,7 +215,7 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                     border: "none",
                     fontSize: "1.2rem",
                     fontWeight: "bold",
-                    color: "#666",
+                    color: "#888888",
                     cursor: "pointer",
                     padding: "0 4px",
                     lineHeight: "1",
@@ -231,8 +232,9 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                       position: "absolute",
                       top: "100%",
                       right: "0", // Changed from left: 0 so it opens inward
-                      backgroundColor: "white",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                      backgroundColor: "#222222",
+                      border: "1px solid #333333", // Subtle border
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
                       borderRadius: "6px",
                       minWidth: "120px",
                       overflow: "hidden",
@@ -241,6 +243,7 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                   >
                     <button
                       onClick={(e) => {
+                        setOpenMenuId(null);
                         handleDelete(e, book);
                       }}
                       onMouseEnter={() => setHoveredDeleteId(book.id)} // Detect Hover In
@@ -258,7 +261,7 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                         // dynamically change background and cursor based on state
                         backgroundColor:
                           hoveredDeleteId === book.id
-                            ? "#fff1f0"
+                            ? "#3a1616"
                             : "transparent",
                         cursor: deletingId === book.id ? "wait" : "pointer",
                       }}

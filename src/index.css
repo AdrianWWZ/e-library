@@ -1,0 +1,9 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #121212; /* Deep modern black/gray */
+  color: #e0e0e0; /* Off-white text so it isn't blindingly bright */
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+}
