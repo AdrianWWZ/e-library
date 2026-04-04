@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "../config/supabaseClient";
 import ePub from "epubjs";
 import { pdfjs } from "react-pdf";
+import DashButton from "./DashButton";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -11,6 +12,18 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 const UploadButton = ({ onRefresh }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
+  const [messageColor, setMessageColor] = useState("#a0a0a0");
+
+  const fileInputRef = useRef(null);
+
+  const showMessage = (text, color) => {
+    setMessageColor(color);
+    if (text.length > 50) {
+      setUploadMessage(text.substring(0, 50) + "...");
+    } else {
+      setUploadMessage(text);
+    }
+  };
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
@@ -20,12 +33,12 @@ const UploadButton = ({ onRefresh }) => {
     const isPdf = file.name.toLowerCase().endsWith(".pdf");
 
     if (!isEpub && !isPdf) {
-      setUploadMessage("Please select a PDF or EPUB file.");
+      showMessage("Please select a PDF or EPUB file.", "#ff4d4f");
       return;
     }
 
     setIsUploading(true);
-    setUploadMessage("Uploading to Supabase...");
+    showMessage("Extracting cover and uploading...", "#3b82f6");
 
     try {
       const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "");
@@ -96,8 +109,8 @@ const UploadButton = ({ onRefresh }) => {
           canvas.width = viewport.width;
 
           // "Draw" the PDF page onto the canvas
-          const renderContext = { canvasContext: context, viewport: viewport };
-          await page.render(renderContext).promise;
+          await page.render({ canvasContext: context, viewport: viewport })
+            .promise;
 
           // Convert the canvas drawing into a JPEG file
           const blob = await new Promise((resolve) =>
@@ -113,20 +126,16 @@ const UploadButton = ({ onRefresh }) => {
             .upload(coverFile.name, coverFile);
 
           if (!coverError) {
-            const { data: coverData } = supabase.storage
+            const { data } = supabase.storage
               .from("Covers")
               .getPublicUrl(coverFile.name);
-            finalCoverUrl = coverData.publicUrl;
+            finalCoverUrl = data.publicUrl;
           }
 
           // Clean up the temporary URL from the browser's memory
           URL.revokeObjectURL(fileUrl);
         } catch (pdfError) {
-          console.error(
-            "Failed to extract PDF cover, using default:",
-            pdfError,
-          );
-          // It safely falls back to the generic gray box if this fails!
+          console.error("PDF Cover failed:", pdfError);
         }
       }
 
@@ -141,7 +150,6 @@ const UploadButton = ({ onRefresh }) => {
       const { data: urlData } = supabase.storage
         .from("Books")
         .getPublicUrl(filePath);
-      const downloadURL = urlData.publicUrl;
 
       // 3. Save to Database
       const { error: dbError } = await supabase.from("Books").insert([
@@ -149,48 +157,65 @@ const UploadButton = ({ onRefresh }) => {
           title: bookTitle,
           author: bookAuthor,
           cover_url: finalCoverUrl,
-          file_url: downloadURL,
+          file_url: urlData.publicUrl,
         },
       ]);
       if (dbError) throw dbError;
 
-      setUploadMessage(`Success! Added "${bookTitle}" to library.`);
+      showMessage(`Successfully Added "${bookTitle}"`, "#28a745");
+      setTimeout(() => setUploadMessage(""), 5000);
     } catch (error) {
       console.error("Upload failed:", error);
-      setUploadMessage("Upload failed. Check console for details.");
+      showMessage("Upload failed. Check console.", "#ff4d4f");
     } finally {
       setIsUploading(false);
       if (onRefresh) onRefresh();
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
+
+  const uploadIcon = (
+    <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+      upload
+    </span>
+  );
 
   return (
     <div
       style={{
-        padding: "20px",
-        backgroundColor: "#1e1e1e",
-        color: "#e0e0e0",
-        borderRadius: "8px",
-        border: "1px solid #333",
-        marginBottom: "20px",
+        display: "flex",
+        alignItems: "center",
       }}
     >
-      <h3 style={{ marginTop: 0 }}>Add to Library</h3>
+      <DashButton
+        icon={uploadIcon}
+        label="Upload"
+        alwaysShowLabel={true}
+        disabled={isUploading}
+        onClick={() => fileInputRef.current.click()}
+      />
+
+      {uploadMessage && (
+        <span
+          style={{
+            marginLeft: "12px",
+            fontSize: "0.85rem",
+            color: messageColor,
+            fontWeight: "500",
+            transition: "opacity 0.3s",
+          }}
+        >
+          {uploadMessage}
+        </span>
+      )}
+
       <input
         type="file"
         accept=".pdf,.epub"
+        ref={fileInputRef}
         onChange={handleFileUpload}
-        disabled={isUploading}
+        style={{ display: "none" }}
       />
-      <p
-        style={{
-          marginTop: "10px",
-          color: isUploading ? "#0066cc" : "#28a745",
-          fontWeight: "bold",
-        }}
-      >
-        {uploadMessage}
-      </p>
     </div>
   );
 };

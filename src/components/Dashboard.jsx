@@ -1,80 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import DashButton from "./DashButton";
+import UploadButton from "./UploadButton";
 
-// Upgraded DashButton with expansion animation logic
-const DashButton = ({
-  icon,
-  label,
-  onClick,
-  expandable = true,
-  alwaysShowLabel = false,
-}) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  // Determine if the text should currently be visible
-  const isExpanded = alwaysShowLabel || (expandable && isHovered);
-
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      title={expandable ? "" : label} // Only show native tooltip if it doesn't expand
-      style={{
-        display: "flex",
-        alignItems: "center",
-        backgroundColor: isHovered ? "#333333" : "transparent", // Borderless, highlight on hover
-        color: isHovered ? "#ffffff" : "#a0a0a0",
-        border: "none",
-        borderRadius: "6px",
-        padding: "8px",
-        cursor: "pointer",
-        transition: "background-color 0.2s ease, color 0.2s ease",
-      }}
-    >
-      {/* Icon Container */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {icon}
-      </div>
-
-      {/* Text Container (The Animation Magic) */}
-      {(expandable || alwaysShowLabel) && (
-        <div
-          style={{
-            maxWidth: isExpanded ? "100px" : "0px",
-            opacity: isExpanded ? 1 : 0,
-            overflow: "hidden",
-            transition:
-              "max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease",
-            whiteSpace: "nowrap",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          <span
-            style={{
-              paddingLeft: isExpanded ? "8px" : "0px",
-              paddingRight: isExpanded ? "4px" : "0px",
-              fontSize: "0.85rem",
-              fontWeight: "500",
-              transition: "padding-left 0.3s ease, padding-right 0.3s ease",
-            }}
-          >
-            {label}
-          </span>
-        </div>
-      )}
-    </button>
-  );
-};
-
-const Dashboard = () => {
-  // SVG icons
+const Dashboard = ({ onRefresh }) => {
   const icons = {
     menu: (
       <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
@@ -94,11 +22,6 @@ const Dashboard = () => {
     search: (
       <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
         search
-      </span>
-    ),
-    upload: (
-      <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
-        upload
       </span>
     ),
   };
@@ -142,12 +65,8 @@ const Dashboard = () => {
         label="Search"
         onClick={() => console.log("Search clicked")}
       />
-      <DashButton
-        icon={icons.upload}
-        label="Upload"
-        alwaysShowLabel={true}
-        onClick={() => console.log("Upload clicked")}
-      />
+
+      <UploadButton onRefresh={onRefresh} />
     </div>
   );
 };

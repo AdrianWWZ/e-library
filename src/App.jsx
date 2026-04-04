@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "./config/supabaseClient";
 
 import ReaderView from "./components/ReaderView";
-import UploadButton from "./components/UploadButton";
 import Library from "./components/Library";
 import Dashboard from "./components/Dashboard";
 
@@ -18,10 +17,10 @@ function App() {
       const { data, error } = await supabase
         .from("Books")
         .select("*")
-        .order("id", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setBooks(data);
+      setBooks(data || []);
     } catch (error) {
       console.error("Error fetching books:", error.message);
     } finally {
@@ -42,14 +41,26 @@ function App() {
       >
         <div
           style={{
-            padding: "10px",
+            padding: "10px 20px ",
             backgroundColor: "#1a1a1a",
             borderBottom: "1px solid #333",
           }}
         >
           <button
             onClick={() => setCurrentBook(null)}
-            style={{ padding: "8px 16px", cursor: "pointer" }}
+            style={{
+              padding: "8px 16px",
+              cursor: "pointer",
+              backgroundColor: "transparent",
+              color: "#e0e0e0",
+              border: "1px solid #555",
+              borderRadius: "6px",
+              transition: "background-color 0.2s",
+            }}
+            onMouseEnter={(e) => (e.target.style.backgroundColor = "#333")}
+            onMouseLeave={(e) =>
+              (e.target.style.backgroundColor = "transparent")
+            }
           >
             ← Back to Library
           </button>
@@ -64,7 +75,7 @@ function App() {
     <div
       style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
     >
-      <Dashboard />
+      <Dashboard onRefresh={refreshLibrary} />
 
       <div
         style={{
@@ -75,13 +86,11 @@ function App() {
           boxSizing: "border-box",
         }}
       >
-        <UploadButton onRefresh={() => fetchBooks()} />
-
         <Library
           books={books}
           loading={loading}
           onSelectBook={setCurrentBook}
-          onRefresh={() => fetchBooks()}
+          onRefresh={refreshLibrary}
         />
       </div>
     </div>
