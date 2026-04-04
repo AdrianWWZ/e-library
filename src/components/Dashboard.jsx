@@ -77,70 +77,29 @@ const Dashboard = () => {
   // SVG icons
   const icons = {
     menu: (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <line x1="3" y1="12" x2="21" y2="12"></line>
-        <line x1="3" y1="6" x2="21" y2="6"></line>
-        <line x1="3" y1="18" x2="21" y2="18"></line>
-      </svg>
+      <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+        menu
+      </span>
     ),
     refresh: (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <path d="M21 2v6h-6"></path>
-        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-      </svg>
+      <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+        refresh
+      </span>
     ),
     filter: (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-      </svg>
+      <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+        filter_list
+      </span>
     ),
     search: (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
+      <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+        search
+      </span>
     ),
     upload: (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-        <polyline points="17 8 12 3 7 8"></polyline>
-        <line x1="12" y1="3" x2="12" y2="15"></line>
-      </svg>
+      <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+        upload
+      </span>
     ),
   };
 
@@ -150,15 +109,14 @@ const Dashboard = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "flex-start",
-        gap: "4px", // Reduced gap since buttons expand
+        gap: "4px",
         padding: "12px 20px",
         borderBottom: "1px solid #333",
-        backgroundColor: "#121212", // Match your dark mode background
+        backgroundColor: "#121212",
         width: "100%",
         boxSizing: "border-box",
       }}
     >
-      {/* Menu - No text animation */}
       <DashButton
         icon={icons.menu}
         label="Menu"
@@ -169,7 +127,6 @@ const Dashboard = () => {
       {/* Spacer to push Menu slightly away from the action buttons if desired, or just leave gap */}
       <div style={{ width: "8px" }}></div>
 
-      {/* Action Buttons - These will stretch on hover */}
       <DashButton
         icon={icons.refresh}
         label="Refresh"
@@ -185,11 +142,6 @@ const Dashboard = () => {
         label="Search"
         onClick={() => console.log("Search clicked")}
       />
-
-      {/* Flexible spacer to push Upload to the far right, or just keep it left. Let's keep it left based on your request */}
-      <div style={{ width: "8px" }}></div>
-
-      {/* Upload - Always shows text, no stretch animation */}
       <DashButton
         icon={icons.upload}
         label="Upload"
