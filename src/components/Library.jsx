@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { supabase } from "../config/supabaseClient";
 
 const Library = ({ books, loading, onSelectBook, onRefresh }) => {
@@ -62,14 +62,17 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
     setOpenMenuId(openMenuId === bookId ? null : bookId);
   };
 
-  if (loading) return <p>Loading your library...</p>;
+  if (loading)
+    return <p style={{ color: "#a0a0a0" }}>Loading your library...</p>;
   if (books.length === 0)
-    return <p>Your library is empty. Upload a book above!</p>;
+    return (
+      <p style={{ color: "#a0a0a0" }}>
+        Your library is empty. Upload a book above!
+      </p>
+    );
 
   return (
     <div style={{ padding: "20px 0", position: "relative" }}>
-      <h2 style={{ color: "#ffffff" }}>My Bookshelf</h2>
-
       {/* Invisible overlay that closes the menu if you click anywhere else on the screen */}
       {openMenuId && (
         <div
@@ -121,6 +124,7 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                 borderRadius: "8px",
                 overflow: "hidden",
                 boxShadow: "0 4px 8px rgba(0,0,0,0.4)",
+                position: "relative",
               }}
             >
               <img
@@ -131,6 +135,36 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                 alt={book.title}
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
+
+              {book.percentage > 0 && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    right: 0,
+                    width: "45px",
+                    height: "45px",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    borderBottomLeftRadius: "100%",
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    alignItems: "flex-start",
+                    padding: "6px 8px 0 0",
+                    boxSizing: "border-box",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <span
+                    style={{
+                      color: "#ffffff",
+                      fontSize: "0.75rem",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {book.percentage}%
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* UPDATED LAYOUT: Text on the left, Menu on the right */}
@@ -167,43 +201,6 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                 >
                   {book.author}
                 </p>
-
-                {/* Visual Progress Bar */}
-                <div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      fontSize: "0.75rem",
-                      color: "#888888",
-                      marginBottom: "4px",
-                    }}
-                  >
-                    <span>
-                      {book.percentage > 0
-                        ? `${book.percentage}% Read`
-                        : "Unread"}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "6px",
-                      backgroundColor: "#333333",
-                      borderRadius: "3px",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: `${book.percentage || 0}%`,
-                        height: "100%",
-                        backgroundColor: "#3b82f6",
-                        transition: "width 0.3s ease",
-                      }}
-                    ></div>
-                  </div>
-                </div>
               </div>
 
               {/* Right Column: The 3-Dot Menu */}
@@ -231,9 +228,9 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                     style={{
                       position: "absolute",
                       top: "100%",
-                      right: "0", // Changed from left: 0 so it opens inward
+                      right: "0",
                       backgroundColor: "#222222",
-                      border: "1px solid #333333", // Subtle border
+                      border: "1px solid #333333",
                       boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
                       borderRadius: "6px",
                       minWidth: "120px",
