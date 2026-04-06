@@ -175,7 +175,7 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                 padding: "10px 4px 0 4px",
               }}
             >
-              {/* Left Column: Title, Author, and Progress */}
+              {/* Left Column: Title & Author */}
               <div style={{ flexGrow: 1, minWidth: 0, paddingRight: "8px" }}>
                 <h4
                   style={{
@@ -199,7 +199,9 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                     textOverflow: "ellipsis",
                   }}
                 >
-                  {book.author}
+                  {book.author && book.author !== "Unknown Author"
+                    ? book.author
+                    : ""}
                 </p>
               </div>
 

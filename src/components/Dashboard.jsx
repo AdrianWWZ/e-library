@@ -19,11 +19,6 @@ const Dashboard = ({ onRefresh }) => {
         filter_list
       </span>
     ),
-    search: (
-      <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
-        search
-      </span>
-    ),
   };
 
   return (
@@ -59,11 +54,6 @@ const Dashboard = ({ onRefresh }) => {
         icon={icons.filter}
         label="Filter"
         onClick={() => console.log("Filter clicked")}
-      />
-      <DashButton
-        icon={icons.search}
-        label="Search"
-        onClick={() => console.log("Search clicked")}
       />
 
       <UploadButton onRefresh={onRefresh} />
