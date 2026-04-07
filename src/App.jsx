@@ -17,7 +17,7 @@ function App() {
       const { data, error } = await supabase
         .from("Books")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("last_accessed_at", { ascending: false });
 
       if (error) throw error;
       setBooks(data || []);
@@ -33,11 +33,35 @@ function App() {
     refreshLibrary();
   }, []);
 
+  const handleOpenBook = async (book) => {
+    // 1. Open the book
+    setCurrentBook(book);
+
+    // 2. Tell database to update the last_accessed_at
+    try {
+      const { error } = await supabase
+        .from("Books")
+        .update({ last_accessed_at: new Date().toISOString() })
+        .eq("id", book.id);
+
+      if (error) throw error;
+
+      refreshLibrary();
+    } catch (error) {
+      console.error("Failed to update access time:", error);
+    }
+  };
+
   // If a book is selected, show the ReaderView
   if (currentBook) {
     return (
       <div
-        style={{ height: "100vh", display: "flex", flexDirection: "column" }}
+        style={{
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#121212",
+        }}
       >
         <div
           style={{
@@ -89,7 +113,7 @@ function App() {
         <Library
           books={books}
           loading={loading}
-          onSelectBook={setCurrentBook}
+          onSelectBook={handleOpenBook}
           onRefresh={refreshLibrary}
         />
       </div>

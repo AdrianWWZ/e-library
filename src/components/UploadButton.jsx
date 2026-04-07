@@ -158,6 +158,9 @@ const UploadButton = ({ onRefresh }) => {
           author: bookAuthor,
           cover_url: finalCoverUrl,
           file_url: urlData.publicUrl,
+          file_location: "Home",
+          owner: "admin",
+          last_accessed_at: new Date().toISOString(),
         },
       ]);
       if (dbError) throw dbError;
