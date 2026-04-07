@@ -1,60 +1,11 @@
 import { useState } from "react";
+import DeleteButton from "./DeleteButton";
+import DownloadButton from "./DownloadButton";
 import { supabase } from "../config/supabaseClient";
 
 const Library = ({ books, loading, onSelectBook, onRefresh }) => {
-  const [deletingId, setDeletingId] = useState(null);
   // State to track which book's dropdown menu is currently open
   const [openMenuId, setOpenMenuId] = useState(null);
-  // State to track if the mouse is hovering over a specific delete button
-  const [hoveredDeleteId, setHoveredDeleteId] = useState(null);
-
-  const handleDelete = async (e, book) => {
-    e.stopPropagation(); // Prevents the book from opening when you click delete!
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete "${book.title}"?`,
-    );
-    if (!confirmDelete) {
-      setOpenMenuId(null);
-      return;
-    }
-
-    try {
-      setDeletingId(book.id);
-
-      // 1. Extract the raw filename from the end of the Supabase URL
-      const fileName = decodeURIComponent(book.file_url.split("/").pop());
-
-      // 2. Delete the file from the Storage Bucket
-      const { error: storageError } = await supabase.storage
-        .from("Books")
-        .remove([fileName]);
-      if (storageError) throw storageError;
-
-      // 3. Delete Cover Image from Storage Bucket
-      if (book.cover_url && !book.cover_url.includes("via.placeholder.com")) {
-        const coverName = decodeURIComponent(book.cover_url.split("/").pop());
-        const { error: coverError } = await supabase.storage
-          .from("Covers")
-          .remove([coverName]);
-        if (coverError) throw coverError;
-      }
-
-      // 4. Delete the text row from the Database
-      const { error: dbError } = await supabase
-        .from("Books")
-        .delete()
-        .eq("id", book.id);
-      if (dbError) throw dbError;
-
-      if (onRefresh) onRefresh();
-    } catch (error) {
-      console.error("Error deleting book:", error.message);
-      alert("Failed to delete the book.");
-    } finally {
-      setDeletingId(null);
-      setOpenMenuId(null);
-    }
-  };
 
   const toggleMenu = (e, bookId) => {
     e.stopPropagation(); // Prevent the book from opening
@@ -136,6 +87,7 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
 
+              {/* Quarter Circle Progress Overlay */}
               {book.percentage > 0 && (
                 <div
                   style={{
@@ -167,7 +119,7 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
               )}
             </div>
 
-            {/* UPDATED LAYOUT: Text on the left, Menu on the right */}
+            {/* Text on the left, Menu on the right */}
             <div
               style={{
                 display: "flex",
@@ -191,12 +143,13 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                 </h4>
                 <p
                   style={{
-                    margin: "0 0 8px 0",
+                    margin: "0",
                     fontSize: "0.8rem",
                     color: "#a0a0a0",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
+                    minHeight: "14px",
                   }}
                 >
                   {book.author && book.author !== "Unknown Author"
@@ -238,35 +191,29 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                       minWidth: "120px",
                       overflow: "hidden",
                       zIndex: 20,
+                      display: "flex",
+                      flexDirection: "column",
                     }}
                   >
-                    <button
-                      onClick={(e) => {
-                        setOpenMenuId(null);
-                        handleDelete(e, book);
-                      }}
-                      onMouseEnter={() => setHoveredDeleteId(book.id)} // Detect Hover In
-                      onMouseLeave={() => setHoveredDeleteId(null)} // Detect Hover Out
-                      disabled={deletingId === book.id}
+                    <DownloadButton
+                      book={book}
+                      onCloseMenu={() => setOpenMenuId(null)}
+                    />
+
+                    {/* Separator */}
+                    <div
                       style={{
-                        display: "block",
+                        height: "1px",
                         width: "100%",
-                        padding: "10px 16px",
-                        textAlign: "left",
-                        border: "none",
-                        color: "#ff4d4f",
-                        fontSize: "0.9rem",
-                        transition: "background-color 0.2s",
-                        // dynamically change background and cursor based on state
-                        backgroundColor:
-                          hoveredDeleteId === book.id
-                            ? "#3a1616"
-                            : "transparent",
-                        cursor: deletingId === book.id ? "wait" : "pointer",
+                        backgroundColor: "#333333",
                       }}
-                    >
-                      {deletingId === book.id ? "Deleting..." : "Delete File"}
-                    </button>
+                    ></div>
+
+                    <DeleteButton
+                      book={book}
+                      onRefresh={onRefresh}
+                      onCloseMenu={() => setOpenMenuId(null)}
+                    />
                   </div>
                 )}
               </div>
