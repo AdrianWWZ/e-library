@@ -4,11 +4,31 @@ import { supabase } from "./config/supabaseClient";
 import ReaderView from "./components/ReaderView";
 import Library from "./components/Library";
 import Dashboard from "./components/Dashboard";
+import AuthModal from "./components/AuthModal";
 
 function App() {
   const [currentBook, setCurrentBook] = useState(null);
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Auth states
+  const [user, setUser] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Check auth status on load and listen for changes
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Refresh Library Display List Function
   const refreshLibrary = async () => {
@@ -99,7 +119,14 @@ function App() {
     <div
       style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
     >
-      <Dashboard onRefresh={refreshLibrary} />
+      {/* Show AuthModal */}
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+
+      <Dashboard
+        onRefresh={refreshLibrary}
+        user={user}
+        onLoginClick={() => setShowAuthModal(true)}
+      />
 
       <div
         style={{

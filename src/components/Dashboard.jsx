@@ -1,8 +1,8 @@
-import { useState } from "react";
 import DashButton from "./DashButton";
 import UploadButton from "./UploadButton";
+import ProfileMenu from "./ProfileMenu";
 
-const Dashboard = ({ onRefresh }) => {
+const Dashboard = ({ onRefresh, user, onLoginClick }) => {
   const icons = {
     menu: (
       <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
@@ -33,8 +33,10 @@ const Dashboard = ({ onRefresh }) => {
         backgroundColor: "#121212",
         width: "100%",
         boxSizing: "border-box",
+        position: "relative",
       }}
     >
+      {/* App Controls (Left Side) */}
       <DashButton
         icon={icons.menu}
         label="Menu"
@@ -42,7 +44,7 @@ const Dashboard = ({ onRefresh }) => {
         onClick={() => console.log("Menu clicked")}
       />
 
-      {/* Spacer to push Menu slightly away from the action buttons if desired, or just leave gap */}
+      {/* Spacer */}
       <div style={{ width: "8px" }}></div>
 
       <DashButton
@@ -57,6 +59,12 @@ const Dashboard = ({ onRefresh }) => {
       />
 
       <UploadButton onRefresh={onRefresh} />
+
+      {/* Spacer to push profile to the right */}
+      <div style={{ flexGrow: 1 }}></div>
+
+      {/* Profile Avatar & Dropdown (Right Side) */}
+      <ProfileMenu user={user} onLoginClick={onLoginClick} />
     </div>
   );
 };
