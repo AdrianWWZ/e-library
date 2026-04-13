@@ -32,11 +32,18 @@ function App() {
 
   // Refresh Library Display List Function
   const refreshLibrary = async () => {
+    if (!user) {
+      setBooks([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from("Books")
         .select("*")
+        .eq("owner", user.email)
         .order("last_accessed_at", { ascending: false });
 
       if (error) throw error;
@@ -51,7 +58,7 @@ function App() {
   // Refresh when app loads
   useEffect(() => {
     refreshLibrary();
-  }, []);
+  }, [user]);
 
   const handleOpenBook = async (book) => {
     // 1. Open the book

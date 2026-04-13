@@ -58,7 +58,7 @@ const Dashboard = ({ onRefresh, user, onLoginClick }) => {
         onClick={() => console.log("Filter clicked")}
       />
 
-      <UploadButton onRefresh={onRefresh} />
+      <UploadButton onRefresh={onRefresh} user={user} />
 
       {/* Spacer to push profile to the right */}
       <div style={{ flexGrow: 1 }}></div>

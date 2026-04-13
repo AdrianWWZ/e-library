@@ -9,7 +9,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
-const UploadButton = ({ onRefresh }) => {
+const UploadButton = ({ onRefresh, user }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
   const [messageColor, setMessageColor] = useState("#a0a0a0");
@@ -26,6 +26,12 @@ const UploadButton = ({ onRefresh }) => {
   };
 
   const handleFileUpload = async (event) => {
+    // Prevent upload if not logged in
+    if (!user) {
+      showMessage("Please log in to upload books.", "#ff4d4f");
+      return;
+    }
+
     const file = event.target.files[0];
     if (!file) return;
 
@@ -159,7 +165,7 @@ const UploadButton = ({ onRefresh }) => {
           cover_url: finalCoverUrl,
           file_url: urlData.publicUrl,
           file_location: "Home",
-          owner: "admin",
+          owner: user.email,
           last_accessed_at: new Date().toISOString(),
         },
       ]);
@@ -194,7 +200,7 @@ const UploadButton = ({ onRefresh }) => {
         icon={uploadIcon}
         label="Upload"
         alwaysShowLabel={true}
-        disabled={isUploading}
+        disabled={isUploading || !user}
         onClick={() => fileInputRef.current.click()}
       />
 
