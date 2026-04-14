@@ -14,19 +14,26 @@ const AuthModal = ({ onClose }) => {
     setMessage({ text: "", type: "" });
 
     try {
+      /* === UNCOMMENT TO ENABLE SIGN UPS ===
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
         setMessage({ text: "Success! You can now log in.", type: "success" });
         setIsSignUp(false); // Switch to login screen
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        onClose(); // Close modal on successful login
+      ==================================== */
+
+      // Standard Login
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+      onClose(); // Close modal on successful login
+
+      /* === UNCOMMENT TO ENABLE SIGN UPS ===
       }
+      ==================================== */
     } catch (error) {
       setMessage({ text: error.message, type: "error" });
     } finally {
@@ -153,6 +160,7 @@ const AuthModal = ({ onClose }) => {
           </button>
         </form>
 
+        {/* === UNCOMMENT TO ENABLE SIGN UPS ===
         <p
           style={{
             color: "#888",
@@ -173,6 +181,7 @@ const AuthModal = ({ onClose }) => {
             {isSignUp ? "Log in" : "Sign up"}
           </span>
         </p>
+        ==================================== */}
       </div>
     </div>
   );
