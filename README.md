@@ -9,7 +9,7 @@ A sleek, modern, dark-themed web application designed to act as a private digita
 - **Dynamic Sorting:** Books are automatically sorted by `last_accessed_at`, pushing your most recently read or added books to the top of the shelf.
 - **Visual Progress Tracking:** Sleek quarter-circle progress overlays on book covers to track reading completion.
 - **Native Downloads:** Securely download your raw PDF or EPUB files directly from your cloud storage.
-- **Private & Secure:** \* Powered by Supabase Authentication.
+- **Private & Secure:** Powered by Supabase Authentication.
   - Strict Row Level Security (RLS) ensures users can only access their own files.
   - Registrations are currently locked to invite-only/single-owner.
 - **Public Guest Shelf:** Allows visitors to view a curated selection of "guest" books without logging in.
@@ -30,20 +30,32 @@ Make sure you have Node.js installed on your machine. You will also need a Supab
 ### Installation
 
 1. Clone the repository:
+
+```bash
    git clone https://github.com/AdrianWWZ/e-library.git
    cd Library-App
+```
 
 2. Install the dependencies:
+
+```bash
    npm install
+```
 
 3. Set up your environment variables:
-   Create a .env file in the root directory and add your Supabase keys:
 
-   VITE_SUPABASE_URL=your_supabase_project_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   Create a `.env` file in the root directory and add your Supabase keys:
+
+```env
+   - VITE_SUPABASE_URL=your_supabase_project_url
+   - VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
 4. Start the development server:
+
+```bash
    npm run dev
+```
 
 ## 🗄️ Database Schema
 
