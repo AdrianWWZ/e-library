@@ -1,16 +1,75 @@
-# React + Vite
+# Personal E-Reader & Library Manager
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A sleek, modern, dark-themed web application designed to act as a private digital bookshelf and reading platform. Built with React and powered by Supabase, this app allows users to upload, manage, and read their personal EPUB and PDF collections from anywhere.
 
-Currently, two official plugins are available:
+## ✨ Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Sleek Dark Mode UI:** A premium, distraction-free interface utilizing Google Material Symbols and a minimalist dashboard.
+- **Smart File Processing:** Automatically extracts cover art and metadata directly from uploaded EPUBs and PDFs.
+- **Dynamic Sorting:** Books are automatically sorted by `last_accessed_at`, pushing your most recently read or added books to the top of the shelf.
+- **Visual Progress Tracking:** Sleek quarter-circle progress overlays on book covers to track reading completion.
+- **Native Downloads:** Securely download your raw PDF or EPUB files directly from your cloud storage.
+- **Private & Secure:** \* Powered by Supabase Authentication.
+  - Strict Row Level Security (RLS) ensures users can only access their own files.
+  - Registrations are currently locked to invite-only/single-owner.
+- **Public Guest Shelf:** Allows visitors to view a curated selection of "guest" books without logging in.
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend:** React, Vite
+- **Backend / Database:** Supabase (PostgreSQL, Storage, Auth)
+- **File Processing:** `epubjs` (for EPUBs), `pdfjs` (for PDFs)
+- **Deployment:** Vercel
 
-## Expanding the ESLint configuration
+## 🚀 Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Prerequisites
+
+Make sure you have Node.js installed on your machine. You will also need a Supabase project set up.
+
+### Installation
+
+1. Clone the repository:
+   git clone https://github.com/AdrianWWZ/e-library.git
+   cd Library-App
+
+2. Install the dependencies:
+   npm install
+
+3. Set up your environment variables:
+   Create a .env file in the root directory and add your Supabase keys:
+
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+4. Start the development server:
+   npm run dev
+
+## 🗄️ Database Schema
+
+The app relies on a Supabase `Books` table with the following structure:
+
+| Column Name        | Type      | Description                             |
+| :----------------- | :-------- | :-------------------------------------- |
+| `id`               | uuid      | Primary key                             |
+| `created_at`       | timestamp | Automatically generated                 |
+| `title`            | text      | Extracted from file metadata            |
+| `author`           | text      | Extracted from file metadata            |
+| `cover_url`        | text      | Public URL to the extracted cover image |
+| `file_url`         | text      | Public URL to the actual book file      |
+| `percentage`       | numeric   | Reading progress (0-100)                |
+| `file_location`    | text      | Directory path (Default: 'Home')        |
+| `owner`            | text      | The email of the user who uploaded it   |
+| `last_accessed_at` | timestamp | Updates whenever a book is opened       |
+
+### Storage Buckets
+
+- `Books`: Stores the raw PDF and EPUB files.
+- `Covers`: Stores the generated JPEG cover images.
+
+## 🔒 Security & Authentication
+
+This application uses Supabase Row Level Security (RLS) to ensure complete data privacy.
+
+- **Private Shelves:** Database policies are configured to only allow `SELECT`, `INSERT`, `UPDATE`, and `DELETE` actions where the `owner` column matches the authenticated user's JWT email.
+- **Public Display:** A read-only policy exception allows unauthenticated users to view books explicitly assigned to the `guest` owner.
