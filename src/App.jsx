@@ -32,19 +32,23 @@ function App() {
 
   // Refresh Library Display List Function
   const refreshLibrary = async () => {
-    if (!user) {
-      setBooks([]);
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
-      const { data, error } = await supabase
+
+      let query = supabase
         .from("Books")
         .select("*")
-        .eq("owner", user.email)
         .order("last_accessed_at", { ascending: false });
+
+      if (!user) {
+        // If NOT logged in, fetch books owned by "guest"
+        query = query.eq("owner", "guest");
+      } else {
+        // If logged in, fetch books owned by user's email
+        query = query.ilike("owner", user.email);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setBooks(data || []);
