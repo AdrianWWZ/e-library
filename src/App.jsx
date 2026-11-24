@@ -1,51 +1,69 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "./config/supabaseClient";
+import { useSettings } from "./context/settings";
+import {
+  DEFAULT_FILTERS,
+  filterAndSortBooks,
+  hasActiveFilters,
+} from "./utils/books";
 
 import ReaderView from "./components/ReaderView";
 import Library from "./components/Library";
 import Dashboard from "./components/Dashboard";
+import FilterBar from "./components/FilterBar";
 import AuthModal from "./components/AuthModal";
+import EditBookModal from "./components/EditBookModal";
 
 function App() {
+  const { showProgress, sort, setSort } = useSettings();
+
   const [currentBook, setCurrentBook] = useState(null);
   const [books, setBooks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // first load only
+  const [refreshing, setRefreshing] = useState(false); // refresh button spinner
 
   // Auth states
   const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Check auth status on load and listen for changes
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user || null);
-    });
+  // Filter / rename states
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [renamingBook, setRenamingBook] = useState(null);
 
+  const userEmail = user?.email ?? null;
+
+  // Check auth status on load and listen for changes.
+  // onAuthStateChange fires straight away with the saved session, so we wait
+  // for it before loading books (stops the guest shelf flashing on refresh).
+  useEffect(() => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
+      setAuthReady(true);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   // Refresh Library Display List Function
-  const refreshLibrary = async () => {
+  const refreshLibrary = useCallback(async () => {
     try {
-      setLoading(true);
+      setRefreshing(true);
 
       let query = supabase
         .from("Books")
         .select("*")
         .order("last_accessed_at", { ascending: false });
 
-      if (!user) {
+      if (!userEmail) {
         // If NOT logged in, fetch books owned by "guest"
         query = query.eq("owner", "guest");
       } else {
         // If logged in, fetch books owned by user's email
-        query = query.ilike("owner", user.email);
+        query = query.ilike("owner", userEmail);
       }
 
       const { data, error } = await query;
@@ -55,73 +73,58 @@ function App() {
     } catch (error) {
       console.error("Error fetching books:", error.message);
     } finally {
+      setRefreshing(false);
       setLoading(false);
     }
-  };
+  }, [userEmail]);
 
-  // Refresh when app loads
+  // Load books once we know who's logged in (and again if that changes)
   useEffect(() => {
+    if (!authReady) return;
     refreshLibrary();
-  }, [user]);
+  }, [authReady, refreshLibrary]);
 
-  const handleOpenBook = async (book) => {
+  // Update one book in the list without re-downloading everything
+  const updateBookLocally = useCallback((id, changes) => {
+    setBooks((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, ...changes } : b)),
+    );
+  }, []);
+
+  const handleOpenBook = (book) => {
     // 1. Open the book
     setCurrentBook(book);
 
-    // 2. Tell database to update the last_accessed_at
-    try {
-      const { error } = await supabase
-        .from("Books")
-        .update({ last_accessed_at: new Date().toISOString() })
-        .eq("id", book.id);
+    // 2. Move it to the top of "Recently opened"
+    const now = new Date().toISOString();
+    updateBookLocally(book.id, { last_accessed_at: now });
 
-      if (error) throw error;
-
-      refreshLibrary();
-    } catch (error) {
-      console.error("Failed to update access time:", error);
-    }
+    // 3. Tell database to update the last_accessed_at (owners only)
+    if (!user) return;
+    supabase
+      .from("Books")
+      .update({ last_accessed_at: now })
+      .eq("id", book.id)
+      .then(({ error }) => {
+        if (error) console.error("Failed to update access time:", error);
+      });
   };
+
+  const visibleBooks = useMemo(
+    () => filterAndSortBooks(books, filters, sort),
+    [books, filters, sort],
+  );
+  const filtersActive = hasActiveFilters(filters);
 
   // If a book is selected, show the ReaderView
   if (currentBook) {
     return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          backgroundColor: "#121212",
-        }}
-      >
-        <div
-          style={{
-            padding: "10px 20px ",
-            backgroundColor: "#1a1a1a",
-            borderBottom: "1px solid #333",
-          }}
-        >
-          <button
-            onClick={() => setCurrentBook(null)}
-            style={{
-              padding: "8px 16px",
-              cursor: "pointer",
-              backgroundColor: "transparent",
-              color: "#e0e0e0",
-              border: "1px solid #555",
-              borderRadius: "6px",
-              transition: "background-color 0.2s",
-            }}
-            onMouseEnter={(e) => (e.target.style.backgroundColor = "#333")}
-            onMouseLeave={(e) =>
-              (e.target.style.backgroundColor = "transparent")
-            }
-          >
-            ← Back to Library
-          </button>
-        </div>
-        <ReaderView book={currentBook} />
-      </div>
+      <ReaderView
+        book={currentBook}
+        canSave={!!user}
+        onProgress={updateBookLocally}
+        onBack={() => setCurrentBook(null)}
+      />
     );
   }
 
@@ -133,11 +136,42 @@ function App() {
       {/* Show AuthModal */}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
+      {/* Rename dialog */}
+      {renamingBook && (
+        <EditBookModal
+          book={renamingBook}
+          onClose={() => setRenamingBook(null)}
+          onSaved={(updated) =>
+            updateBookLocally(updated.id, {
+              title: updated.title,
+              author: updated.author,
+            })
+          }
+        />
+      )}
+
       <Dashboard
         onRefresh={refreshLibrary}
+        refreshing={refreshing}
         user={user}
+        books={books}
         onLoginClick={() => setShowAuthModal(true)}
+        filterOpen={filterOpen}
+        filtersActive={filtersActive}
+        onToggleFilter={() => setFilterOpen((open) => !open)}
       />
+
+      {filterOpen && (
+        <FilterBar
+          filters={filters}
+          onChange={setFilters}
+          onClear={() => setFilters(DEFAULT_FILTERS)}
+          sort={sort}
+          onSortChange={setSort}
+          shown={visibleBooks.length}
+          total={books.length}
+        />
+      )}
 
       <div
         style={{
@@ -149,10 +183,15 @@ function App() {
         }}
       >
         <Library
-          books={books}
+          books={visibleBooks}
+          totalCount={books.length}
           loading={loading}
+          canEdit={!!user}
+          showProgress={showProgress}
           onSelectBook={handleOpenBook}
           onRefresh={refreshLibrary}
+          onRename={setRenamingBook}
+          onClearFilters={() => setFilters(DEFAULT_FILTERS)}
         />
       </div>
     </div>

@@ -7,27 +7,42 @@ const DashButton = ({
   expandable = true,
   alwaysShowLabel = false,
   disabled = false,
+  active = false, // highlights the button (e.g. filter panel open)
+  badge = false, // small dot in the corner (e.g. filters applied)
+  title,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const isExpanded = alwaysShowLabel || (expandable && isHovered);
+
+  let color = "var(--text-muted)";
+  if (disabled) color = "var(--text-disabled)";
+  else if (active) color = "var(--accent)";
+  else if (isHovered) color = "var(--text-strong)";
+
+  let backgroundColor = "transparent";
+  if (!disabled && active) backgroundColor = "var(--accent-soft)";
+  else if (!disabled && isHovered) backgroundColor = "var(--hover)";
 
   return (
     <button
       onClick={disabled ? null : onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      title={expandable ? "" : label}
+      title={title ?? (expandable ? "" : label)}
+      aria-label={label}
+      aria-pressed={active || undefined}
       disabled={disabled}
       style={{
         display: "flex",
         alignItems: "center",
-        backgroundColor: isHovered && !disabled ? "#333333" : "transparent",
-        color: disabled ? "#555555" : isHovered ? "#ffffff" : "#a0a0a0",
+        backgroundColor,
+        color,
         border: "none",
         borderRadius: "6px",
         padding: "8px",
         cursor: disabled ? "not-allowed" : "pointer",
         transition: "background-color 0.2s ease, color 0.2s ease",
+        position: "relative",
       }}
     >
       <div
@@ -39,6 +54,21 @@ const DashButton = ({
       >
         {icon}
       </div>
+
+      {badge && (
+        <span
+          style={{
+            position: "absolute",
+            top: "6px",
+            left: "22px",
+            width: "7px",
+            height: "7px",
+            borderRadius: "50%",
+            backgroundColor: "var(--accent)",
+            border: "1.5px solid var(--bg)",
+          }}
+        />
+      )}
 
       {(expandable || alwaysShowLabel) && (
         <div

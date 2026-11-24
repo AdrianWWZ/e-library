@@ -1,9 +1,27 @@
 import { useState } from "react";
 import DeleteButton from "./DeleteButton";
 import DownloadButton from "./DownloadButton";
-import { supabase } from "../config/supabaseClient";
+import MenuItem from "./MenuItem";
+import BookCover from "./BookCover";
+import { hasAuthor } from "../utils/books";
 
-const Library = ({ books, loading, onSelectBook, onRefresh }) => {
+const Message = ({ children }) => (
+  <div style={{ color: "var(--text-muted)", padding: "20px 0" }}>
+    {children}
+  </div>
+);
+
+const Library = ({
+  books, // already filtered & sorted
+  totalCount, // number of books before filtering
+  loading,
+  canEdit, // only logged-in owners can rename / delete
+  showProgress,
+  onSelectBook,
+  onRefresh,
+  onRename,
+  onClearFilters,
+}) => {
   // State to track which book's dropdown menu is currently open
   const [openMenuId, setOpenMenuId] = useState(null);
 
@@ -13,13 +31,35 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
     setOpenMenuId(openMenuId === bookId ? null : bookId);
   };
 
-  if (loading)
-    return <p style={{ color: "#a0a0a0" }}>Loading your library...</p>;
+  if (loading) return <Message>Loading your library...</Message>;
+
+  if (totalCount === 0)
+    return (
+      <Message>
+        {canEdit
+          ? "Your library is empty. Upload a book above!"
+          : "There are no books on this shelf yet."}
+      </Message>
+    );
+
   if (books.length === 0)
     return (
-      <p style={{ color: "#a0a0a0" }}>
-        Your library is empty. Upload a book above!
-      </p>
+      <Message>
+        No books match your filters.{" "}
+        <button
+          onClick={onClearFilters}
+          style={{
+            background: "none",
+            border: "none",
+            padding: 0,
+            color: "var(--accent)",
+            cursor: "pointer",
+            fontSize: "inherit",
+          }}
+        >
+          Clear filters
+        </button>
+      </Message>
     );
 
   return (
@@ -71,24 +111,17 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
               style={{
                 width: "100%",
                 aspectRatio: "2/3",
-                backgroundColor: "#2a2a2a",
+                backgroundColor: "var(--cover-bg)",
                 borderRadius: "8px",
                 overflow: "hidden",
-                boxShadow: "0 4px 8px rgba(0,0,0,0.4)",
+                boxShadow: "0 4px 8px var(--shadow)",
                 position: "relative",
               }}
             >
-              <img
-                src={
-                  book.cover_url ||
-                  "https://via.placeholder.com/150x220/333333/ffffff?text=No+Cover"
-                }
-                alt={book.title}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
+              <BookCover key={book.cover_url || "none"} book={book} />
 
               {/* Quarter Circle Progress Overlay */}
-              {book.percentage > 0 && (
+              {showProgress && book.percentage > 0 && (
                 <div
                   style={{
                     position: "absolute",
@@ -130,10 +163,11 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
               {/* Left Column: Title & Author */}
               <div style={{ flexGrow: 1, minWidth: 0, paddingRight: "8px" }}>
                 <h4
+                  title={book.title}
                   style={{
                     margin: "0 0 4px 0",
                     fontSize: "1rem",
-                    color: "#ffffff",
+                    color: "var(--text-strong)",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -145,16 +179,14 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                   style={{
                     margin: "0",
                     fontSize: "0.8rem",
-                    color: "#a0a0a0",
+                    color: "var(--text-muted)",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     minHeight: "14px",
                   }}
                 >
-                  {book.author && book.author !== "Unknown Author"
-                    ? book.author
-                    : ""}
+                  {hasAuthor(book) ? book.author : ""}
                 </p>
               </div>
 
@@ -167,12 +199,13 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                     border: "none",
                     fontSize: "1.2rem",
                     fontWeight: "bold",
-                    color: "#888888",
+                    color: "var(--text-faint)",
                     cursor: "pointer",
                     padding: "0 4px",
                     lineHeight: "1",
                   }}
                   title="Menu"
+                  aria-label={`Options for ${book.title}`}
                 >
                   ⋮
                 </button>
@@ -180,15 +213,16 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                 {/* The Dropdown Box */}
                 {openMenuId === book.id && (
                   <div
+                    onClick={(e) => e.stopPropagation()}
                     style={{
                       position: "absolute",
                       top: "100%",
                       right: "0",
-                      backgroundColor: "#222222",
-                      border: "1px solid #333333",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+                      backgroundColor: "var(--surface-raised)",
+                      border: "1px solid var(--border)",
+                      boxShadow: "0 4px 12px var(--shadow)",
                       borderRadius: "6px",
-                      minWidth: "120px",
+                      minWidth: "150px",
                       overflow: "hidden",
                       zIndex: 20,
                       display: "flex",
@@ -200,20 +234,35 @@ const Library = ({ books, loading, onSelectBook, onRefresh }) => {
                       onCloseMenu={() => setOpenMenuId(null)}
                     />
 
-                    {/* Separator */}
-                    <div
-                      style={{
-                        height: "1px",
-                        width: "100%",
-                        backgroundColor: "#333333",
-                      }}
-                    ></div>
+                    {/* Owner-only actions - guests just get Download */}
+                    {canEdit && (
+                      <>
+                        <MenuItem
+                          icon="edit"
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            onRename(book);
+                          }}
+                        >
+                          Rename
+                        </MenuItem>
 
-                    <DeleteButton
-                      book={book}
-                      onRefresh={onRefresh}
-                      onCloseMenu={() => setOpenMenuId(null)}
-                    />
+                        {/* Separator */}
+                        <div
+                          style={{
+                            height: "1px",
+                            width: "100%",
+                            backgroundColor: "var(--border)",
+                          }}
+                        ></div>
+
+                        <DeleteButton
+                          book={book}
+                          onRefresh={onRefresh}
+                          onCloseMenu={() => setOpenMenuId(null)}
+                        />
+                      </>
+                    )}
                   </div>
                 )}
               </div>

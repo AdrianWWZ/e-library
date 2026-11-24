@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { supabase } from "../config/supabaseClient";
+import MenuItem from "./MenuItem";
+import { getStorageFileName, isStoredCover } from "../utils/books";
 
 const DeleteButton = ({ book, onRefresh, onCloseMenu }) => {
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   const handleDelete = async (e) => {
     e.stopPropagation(); // Prevents file from opening when click delete
@@ -19,35 +20,39 @@ const DeleteButton = ({ book, onRefresh, onCloseMenu }) => {
     try {
       setIsDeleting(true);
 
-      // 1. Extract raw filename from the end of the Supabase URL
-      const fileName = decodeURIComponent(book.file_url.split("/").pop());
+      // 1. Delete the row from the Database FIRST.
+      //    .select() returns the deleted rows - if Row Level Security blocked
+      //    the delete we get an empty list, and we stop before touching files.
+      const { data: deleted, error: dbError } = await supabase
+        .from("Books")
+        .delete()
+        .eq("id", book.id)
+        .select("id");
+      if (dbError) throw dbError;
+      if (!deleted || deleted.length === 0) {
+        throw new Error("You don't have permission to delete this book.");
+      }
 
       // 2. Delete the file from the Storage Bucket
       const { error: storageError } = await supabase.storage
         .from("Books")
-        .remove([fileName]);
-      if (storageError) throw storageError;
+        .remove([getStorageFileName(book.file_url)]);
+      if (storageError)
+        console.error("File cleanup failed:", storageError.message);
 
       // 3. Delete Cover Image from Storage Bucket
-      if (book.cover_url && !book.cover_url.includes("via.placeholder.com")) {
-        const coverName = decodeURIComponent(book.cover_url.split("/").pop());
+      if (isStoredCover(book)) {
         const { error: coverError } = await supabase.storage
           .from("Covers")
-          .remove([coverName]);
-        if (coverError) throw coverError;
+          .remove([getStorageFileName(book.cover_url)]);
+        if (coverError)
+          console.error("Cover cleanup failed:", coverError.message);
       }
-
-      // 4. Delete the text row from the Database
-      const { error: dbError } = await supabase
-        .from("Books")
-        .delete()
-        .eq("id", book.id);
-      if (dbError) throw dbError;
 
       if (onRefresh) onRefresh();
     } catch (error) {
       console.error("Error deleting book:", error.message);
-      alert("Failed to delete the book.");
+      alert(`Failed to delete the book. ${error.message || ""}`);
     } finally {
       setIsDeleting(false);
       if (onCloseMenu) onCloseMenu();
@@ -55,26 +60,9 @@ const DeleteButton = ({ book, onRefresh, onCloseMenu }) => {
   };
 
   return (
-    <button
-      onClick={handleDelete}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      disabled={isDeleting}
-      style={{
-        display: "block",
-        width: "100%",
-        padding: "10px 16px",
-        textAlign: "left",
-        border: "none",
-        color: "#ff4d4f",
-        fontSize: "0.9rem",
-        transition: "background-color 0.2s",
-        backgroundColor: isHovered ? "#3a1616" : "transparent",
-        cursor: isDeleting ? "wait" : "pointer",
-      }}
-    >
+    <MenuItem icon="delete" danger onClick={handleDelete} busy={isDeleting}>
       {isDeleting ? "Deleting..." : "Delete"}
-    </button>
+    </MenuItem>
   );
 };
 

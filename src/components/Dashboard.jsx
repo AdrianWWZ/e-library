@@ -1,25 +1,30 @@
 import DashButton from "./DashButton";
 import UploadButton from "./UploadButton";
 import ProfileMenu from "./ProfileMenu";
+import StorageBar from "./StorageBar";
+import { useSettings } from "../context/settings";
 
-const Dashboard = ({ onRefresh, user, onLoginClick }) => {
-  const icons = {
-    menu: (
-      <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
-        menu
-      </span>
-    ),
-    refresh: (
-      <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
-        refresh
-      </span>
-    ),
-    filter: (
-      <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
-        filter_list
-      </span>
-    ),
-  };
+const Icon = ({ name, className = "" }) => (
+  <span
+    className={`material-symbols-outlined ${className}`}
+    style={{ fontSize: "20px" }}
+  >
+    {name}
+  </span>
+);
+
+const Dashboard = ({
+  onRefresh,
+  refreshing,
+  user,
+  books,
+  onLoginClick,
+  filterOpen,
+  filtersActive,
+  onToggleFilter,
+}) => {
+  const { theme, toggleTheme } = useSettings();
+  const nextTheme = theme === "dark" ? "light" : "dark";
 
   return (
     <div
@@ -29,8 +34,8 @@ const Dashboard = ({ onRefresh, user, onLoginClick }) => {
         justifyContent: "flex-start",
         gap: "4px",
         padding: "12px 20px",
-        borderBottom: "1px solid #333",
-        backgroundColor: "#121212",
+        borderBottom: "1px solid var(--border)",
+        backgroundColor: "var(--bg)",
         width: "100%",
         boxSizing: "border-box",
         position: "relative",
@@ -38,7 +43,7 @@ const Dashboard = ({ onRefresh, user, onLoginClick }) => {
     >
       {/* App Controls (Left Side) */}
       <DashButton
-        icon={icons.menu}
+        icon={<Icon name="menu" />}
         label="Menu"
         expandable={false}
         onClick={() => console.log("Menu clicked")}
@@ -48,14 +53,17 @@ const Dashboard = ({ onRefresh, user, onLoginClick }) => {
       <div style={{ width: "8px" }}></div>
 
       <DashButton
-        icon={icons.refresh}
-        label="Refresh"
-        onClick={() => console.log("Refresh clicked")}
+        icon={<Icon name="refresh" className={refreshing ? "spin" : ""} />}
+        label={refreshing ? "Refreshing" : "Refresh"}
+        disabled={refreshing}
+        onClick={onRefresh}
       />
       <DashButton
-        icon={icons.filter}
+        icon={<Icon name="filter_list" />}
         label="Filter"
-        onClick={() => console.log("Filter clicked")}
+        active={filterOpen}
+        badge={filtersActive && !filterOpen}
+        onClick={onToggleFilter}
       />
 
       <UploadButton onRefresh={onRefresh} user={user} />
@@ -63,8 +71,25 @@ const Dashboard = ({ onRefresh, user, onLoginClick }) => {
       {/* Spacer to push profile to the right */}
       <div style={{ flexGrow: 1 }}></div>
 
+      {/* Storage line (moves into the profile menu on small screens) */}
+      {user && (
+        <div className="hide-narrow" style={{ marginRight: "12px" }}>
+          <StorageBar books={books} compact />
+        </div>
+      )}
+
+      {/* Lights: light / dark mode */}
+      <DashButton
+        icon={<Icon name={theme === "dark" ? "light_mode" : "dark_mode"} />}
+        label={`Switch to ${nextTheme} mode`}
+        expandable={false}
+        onClick={toggleTheme}
+      />
+
+      <div style={{ width: "6px" }}></div>
+
       {/* Profile Avatar & Dropdown (Right Side) */}
-      <ProfileMenu user={user} onLoginClick={onLoginClick} />
+      <ProfileMenu user={user} books={books} onLoginClick={onLoginClick} />
     </div>
   );
 };

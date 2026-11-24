@@ -1,18 +1,19 @@
 import { useState, useRef } from "react";
 import { supabase } from "../config/supabaseClient";
 import ePub from "epubjs";
-import { pdfjs } from "react-pdf";
+import { pdfjs } from "../config/pdfWorker";
 import DashButton from "./DashButton";
+import { rememberFileSize } from "../utils/storageSize";
+import { formatBytes } from "../utils/files";
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url,
-).toString();
+// Supabase free plan rejects files over 50 MB. Override with
+// VITE_MAX_UPLOAD_MB in your .env if you're on a paid plan.
+const MAX_UPLOAD_MB = Number(import.meta.env.VITE_MAX_UPLOAD_MB) || 50;
 
 const UploadButton = ({ onRefresh, user }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
-  const [messageColor, setMessageColor] = useState("#a0a0a0");
+  const [messageColor, setMessageColor] = useState("var(--text-muted)");
 
   const fileInputRef = useRef(null);
 
@@ -28,7 +29,7 @@ const UploadButton = ({ onRefresh, user }) => {
   const handleFileUpload = async (event) => {
     // Prevent upload if not logged in
     if (!user) {
-      showMessage("Please log in to upload books.", "#ff4d4f");
+      showMessage("Please log in to upload books.", "var(--danger)");
       return;
     }
 
@@ -39,12 +40,21 @@ const UploadButton = ({ onRefresh, user }) => {
     const isPdf = file.name.toLowerCase().endsWith(".pdf");
 
     if (!isEpub && !isPdf) {
-      showMessage("Please select a PDF or EPUB file.", "#ff4d4f");
+      showMessage("Please select a PDF or EPUB file.", "var(--danger)");
+      return;
+    }
+
+    if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
+      showMessage(
+        `File is ${formatBytes(file.size)} - the limit is ${MAX_UPLOAD_MB} MB.`,
+        "var(--danger)",
+      );
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
     setIsUploading(true);
-    showMessage("Extracting cover and uploading...", "#3b82f6");
+    showMessage("Extracting cover and uploading...", "var(--accent)");
 
     try {
       const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "");
@@ -52,8 +62,10 @@ const UploadButton = ({ onRefresh, user }) => {
 
       let bookTitle = file.name.replace(/\.[^/.]+$/, ""); // Default to filename without extension
       let bookAuthor = "Unknown Author";
-      let finalCoverUrl =
-        "https://via.placeholder.com/150x220/333333/ffffff?text=PDF+Document"; // Default PDF cover
+      // No cover -> the library shows a title card instead
+      // (via.placeholder.com, used before, is no longer reliable)
+      let finalCoverUrl = "";
+      let coverSize = 0;
 
       // --- 1. EXTRACT EPUB METADATA & COVER ---
       if (isEpub) {
@@ -87,6 +99,7 @@ const UploadButton = ({ onRefresh, user }) => {
               .from("Covers")
               .getPublicUrl(coverFile.name);
             finalCoverUrl = coverData.publicUrl;
+            coverSize = coverFile.size;
           }
         }
       }
@@ -98,7 +111,9 @@ const UploadButton = ({ onRefresh, user }) => {
           const fileUrl = URL.createObjectURL(file);
 
           // Load the PDF and fetch Page 1
-          const loadingTask = pdfjsLib.getDocument(fileUrl);
+          // (pdfjs is the same library as the global "pdfjsLib" used before,
+          // just imported explicitly so the linter knows where it comes from)
+          const loadingTask = pdfjs.getDocument(fileUrl);
           const pdf = await loadingTask.promise;
           const page = await pdf.getPage(1);
 
@@ -115,7 +130,7 @@ const UploadButton = ({ onRefresh, user }) => {
           canvas.width = viewport.width;
 
           // "Draw" the PDF page onto the canvas
-          await page.render({ canvasContext: context, viewport: viewport })
+          await page.render({ canvas, canvasContext: context, viewport })
             .promise;
 
           // Convert the canvas drawing into a JPEG file
@@ -136,10 +151,12 @@ const UploadButton = ({ onRefresh, user }) => {
               .from("Covers")
               .getPublicUrl(coverFile.name);
             finalCoverUrl = data.publicUrl;
+            coverSize = coverFile.size;
           }
 
           // Clean up the temporary URL from the browser's memory
           URL.revokeObjectURL(fileUrl);
+          pdf.destroy();
         } catch (pdfError) {
           console.error("PDF Cover failed:", pdfError);
         }
@@ -171,11 +188,15 @@ const UploadButton = ({ onRefresh, user }) => {
       ]);
       if (dbError) throw dbError;
 
-      showMessage(`Successfully Added "${bookTitle}"`, "#28a745");
+      // We already know the sizes, so the storage bar doesn't need to look them up
+      rememberFileSize(urlData.publicUrl, file.size);
+      if (finalCoverUrl) rememberFileSize(finalCoverUrl, coverSize);
+
+      showMessage(`Successfully Added "${bookTitle}"`, "var(--success)");
       setTimeout(() => setUploadMessage(""), 5000);
     } catch (error) {
       console.error("Upload failed:", error);
-      showMessage("Upload failed. Check console.", "#ff4d4f");
+      showMessage("Upload failed. Check console.", "var(--danger)");
     } finally {
       setIsUploading(false);
       if (onRefresh) onRefresh();

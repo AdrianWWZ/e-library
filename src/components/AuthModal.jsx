@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "../config/supabaseClient";
 
 const AuthModal = ({ onClose }) => {
+  // eslint-disable-next-line no-unused-vars -- setIsSignUp is used by the sign-up code below when it is uncommented
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,7 +50,7 @@ const AuthModal = ({ onClose }) => {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.7)",
+        backgroundColor: "var(--backdrop)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -58,13 +59,13 @@ const AuthModal = ({ onClose }) => {
     >
       <div
         style={{
-          backgroundColor: "#1e1e1e",
+          backgroundColor: "var(--surface)",
           padding: "30px",
           borderRadius: "12px",
           width: "100%",
           maxWidth: "350px",
-          border: "1px solid #333",
-          boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+          border: "1px solid var(--border)",
+          boxShadow: "0 10px 25px var(--shadow)",
           position: "relative",
         }}
       >
@@ -77,7 +78,7 @@ const AuthModal = ({ onClose }) => {
             right: "15px",
             background: "none",
             border: "none",
-            color: "#888",
+            color: "var(--text-faint)",
             cursor: "pointer",
             fontSize: "1.2rem",
           }}
@@ -87,7 +88,7 @@ const AuthModal = ({ onClose }) => {
 
         <h2
           style={{
-            color: "#fff",
+            color: "var(--text-strong)",
             marginTop: 0,
             marginBottom: "20px",
             textAlign: "center",
@@ -109,9 +110,9 @@ const AuthModal = ({ onClose }) => {
             style={{
               padding: "10px",
               borderRadius: "6px",
-              border: "1px solid #444",
-              backgroundColor: "#2a2a2a",
-              color: "#fff",
+              border: "1px solid var(--border-strong)",
+              backgroundColor: "var(--input-bg)",
+              color: "var(--text-strong)",
             }}
           />
           <input
@@ -123,16 +124,17 @@ const AuthModal = ({ onClose }) => {
             style={{
               padding: "10px",
               borderRadius: "6px",
-              border: "1px solid #444",
-              backgroundColor: "#2a2a2a",
-              color: "#fff",
+              border: "1px solid var(--border-strong)",
+              backgroundColor: "var(--input-bg)",
+              color: "var(--text-strong)",
             }}
           />
 
           {message.text && (
             <div
               style={{
-                color: message.type === "error" ? "#ff4d4f" : "#28a745",
+                color:
+                  message.type === "error" ? "var(--danger)" : "var(--success)",
                 fontSize: "0.85rem",
                 textAlign: "center",
               }}
@@ -149,7 +151,7 @@ const AuthModal = ({ onClose }) => {
               borderRadius: "6px",
               border: "none",
               cursor: loading ? "wait" : "pointer",
-              backgroundColor: "#3b82f6",
+              backgroundColor: "var(--accent)",
               color: "#fff",
               fontWeight: "bold",
               transition: "background-color 0.2s",
@@ -163,7 +165,7 @@ const AuthModal = ({ onClose }) => {
         {/* === UNCOMMENT TO ENABLE SIGN UPS ===
         <p
           style={{
-            color: "#888",
+            color: "var(--text-faint)",
             fontSize: "0.85rem",
             textAlign: "center",
             marginTop: "20px",
@@ -176,7 +178,7 @@ const AuthModal = ({ onClose }) => {
               setIsSignUp(!isSignUp);
               setMessage({ text: "", type: "" });
             }}
-            style={{ color: "#3b82f6", cursor: "pointer" }}
+            style={{ color: "var(--accent)", cursor: "pointer" }}
           >
             {isSignUp ? "Log in" : "Sign up"}
           </span>
